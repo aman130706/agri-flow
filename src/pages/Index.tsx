@@ -10,12 +10,39 @@ import { toast } from "sonner";
 const Index = () => {
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    const profile = localStorage.getItem("farmerProfile");
-    if (profile) {
-      navigate("/dashboard");
-    }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        navigate("/onboarding");
+      }
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/onboarding");
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast.error("Sign in failed. Please try again.");
+      }
+    } catch {
+      toast.error("Sign in failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-secondary/20">
